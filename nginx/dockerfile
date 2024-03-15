@@ -1,0 +1,17 @@
+FROM nginx:latest
+
+# Install Nano
+RUN apt-get update && apt-get install -y nano
+
+# Install PHP FPM
+RUN apt-get update && apt-get install -y php-fpm
+
+# Copy Nginx config files to /etc/nginx
+COPY ./nginx/configs/nginx.conf /etc/nginx/nginx.conf
+
+COPY ./nginx/configs/default.conf /etc/nginx/conf.d/default.conf
+
+# Copy the sites-available folder to /etc/nginx/sites-available
+COPY ./volumes/nginx/sites-available /etc/nginx/sites-available
+
+EXPOSE 80 443

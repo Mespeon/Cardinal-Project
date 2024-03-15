@@ -1,0 +1,3 @@
+FROM phpmyadmin:apache
+
+EXPOSE 80 443

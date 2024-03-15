@@ -1,0 +1,94 @@
+version: '3.7'
+services:
+  # To build all services in one go, run this command:
+  # docker compose up --build --force-recreate --detach --wait
+  # To build or rebuild a specific service, run this command:
+  # docker compose up --build --force-recreate --detach --wait <service_name>
+  nginx:
+    container_name: cardinal.nginx
+    restart: unless-stopped
+    tty: true
+    build:
+      context: .
+      dockerfile: ./nginx/dockerfile
+    # Ports exposed for the container.
+    # External IP is what is used in a host machine to access
+    # the container application listening to the internal IP.
+    # You may add more ports if your implementation requires it.
+    # Ports 8000 and 8001 should not be removed or modified.
+    # Ports 9000 and 9001 should not be used as they are used by FastCGI
+    # when using an image with PHP-FPM installed.
+    # Ports listed here follow the following format:
+    # <external_IP>:<internal_IP>
+    ports:
+      - '8000:80'
+      - '8001:443'
+    # Volumes and/or files mounted for the container
+    # Mounted files/directories are directly mirrored from the host
+    # to the target path or file in the container.
+    # The htdocs folder is where you place HTML codebases just like in Apache/XAMPP,
+    # however the host path may be changed to any directory of choice;
+    # the container_path should be left unchanged.
+    # If you need to add more, follow the format when declaring mounts:
+    # <host_path>:<container_path>
+    volumes:
+      - ./nginx/configs/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/configs/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/configs/mime.types:/etc/nginx/mime.types
+      - ./volumes/nginx/sites-available:/etc/nginx/sites-available
+      - ./volumes/nginx/sites-available:/etc/nginx/sites-enabled
+      # - ./volumes/nginx/htdocs:/var/www
+  mysql:
+    container_name: cardinal.mysql
+    restart: always
+    build:
+      context: .
+      dockerfile: ./mysql/dockerfile
+    # Ports exposed for the container.
+    # External IP is what is used in a host machine to access
+    # the container application listening to the internal IP.
+    # Ports listed here follow the following format:
+    # <external_IP>:<internal_IP>
+    ports:
+      - '40000:3306'
+      - '40001:33060'
+    environment:
+      # Password for the root account - it is recommended to set one.
+      MYSQL_ROOT_PASSWORD: 
+      # A user with general permissions - it is recommended to set one.
+      MYSQL_USER: 
+      # Password for this user - it is recommended to set one.
+      MYSQL_PASSWORD: 
+    volumes:
+      # This will bind the volumes/mysql directory within this folder.
+      # This directory will hold all the databases and files required for
+      # MySQL and PHPMyAdmin to work properly - ensure that it is present
+      # or a valid directory path is provided.
+      # This may be changed to a different directory if required.
+      - ./volumes/mysql:/var/lib/mysql
+  phpmyadmin:
+    container_name: cardinal.phpmyadmin
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: ./phpmyadmin/dockerfile
+    # Ports exposed for the container.
+    # External IP is what is used in a host machine to access
+    # the container application listening to the internal IP.
+    # Ports listed here follow the following format:
+    # <external_IP>:<internal_IP>
+    ports:
+      - '40002:80'
+      - '40003:443'
+    environment:
+      # Comma-separated list of host names of MySQL servers
+      PMA_HOST: mysql
+      # Port of the MySQL server
+      PMA_PORT: 3306
+      # Comma-separated list of verbose names of MySQL servers
+      PMA_VERBOSES: 'mysql'
+      # Overrides the maximum execution time in seconds for phpMyAdmin
+      MAX_EXECUTION_TIME: 900
+      # Overrides the default upload value - current value is 1GB
+      # Changes upload_max_filesize and post_max_size values
+      UPLOAD_LIMIT: '1G'
